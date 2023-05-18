@@ -1,0 +1,43 @@
+version: '3'
+services:
+    nginx:
+        image: nginx:latest
+        volumes:
+        - ./:/var/www
+        - ./docker/nginx/conf.d:/etc/nginx/conf.d
+        ports:
+        - 80:80
+        depends_on:
+        - app
+        container_name: bpartners_nginx
+    app:
+        container_name: bpartners_app
+        build:
+            context: ./docker
+            dockerfile: Dockerfile
+        image: php-8.2/app
+        env_file:
+            - .env
+        volumes:
+            - ./:/var/www
+        working_dir: /var/www
+        depends_on:
+            - mysql
+    mysql:
+        container_name: bpartners_db
+        image: 'mysql/mysql-server:8.0'
+        restart: always
+        ports:
+            - '${FORWARD_DB_PORT:-3306}:3306'
+        environment:
+            MYSQL_ROOT_PASSWORD: 'bpartners_password'
+            MYSQL_ROOT_HOST: 'mysql'
+            MYSQL_DATABASE: 'bpartners_db'
+            MYSQL_USER: 'bpartners_user'
+            MYSQL_PASSWORD: 'bpartners_password'
+            MYSQL_ALLOW_EMPTY_PASSWORD: 1
+        volumes:
+            - 'mysql:/var/lib/mysql'
+volumes:
+    mysql:
+        driver: local
